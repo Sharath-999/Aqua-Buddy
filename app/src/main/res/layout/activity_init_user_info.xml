@@ -7,7 +7,7 @@
         android:layout_height="match_parent"
         android:id="@+id/init_user_info_parent_layout"
         android:background="@drawable/splash_bg_gradiant"
-        tools:context=".InitUserInfoActivity">
+        tools:context="keyur.diwan.project.waterReminder.InitUserInfoActivity">
     <Button
 
             android:text="@string/str_continue"

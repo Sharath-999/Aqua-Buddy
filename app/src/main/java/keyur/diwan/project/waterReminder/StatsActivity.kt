@@ -1,137 +1,68 @@
 package keyur.diwan.project.waterReminder
 
-import android.content.SharedPreferences
-import android.database.Cursor
-import android.graphics.Color
+// Import Build to check the Android API version (used for @RequiresApi annotation)
+import android.os.Build
+// Import Bundle to handle saved instance state in onCreate
 import android.os.Bundle
-import android.widget.Toast
+// Import RequiresApi annotation to specify the minimum API level
+import androidx.annotation.RequiresApi
+// Import AppCompatActivity as the base class for this activity
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import com.github.mikephil.charting.animation.Easing
-import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-import keyur.diwan.project.waterReminder.helpers.SqliteHelper
-import keyur.diwan.project.waterReminder.utils.AppUtils
-import keyur.diwan.project.waterReminder.utils.ChartXValueFormatter
-import kotlinx.android.synthetic.main.activity_stats.*
-import kotlin.math.max
+// Import LineChart for potential charting functionality (not currently used)
+import com.github.mikephil.charting.charts.LineChart
+// Import chart data classes (not currently used)
+import com.github.mikephil.charting.data.*
+// Import chart components (not currently used)
+import com.github.mikephil.charting.components.*
+// Import app resources (e.g., layouts, drawables)
+import io.github.z3r0c00l_2k.aquadroid.R
+// Import View Binding class for this activity, auto-generated from activity_stats.xml
+import io.github.z3r0c00l_2k.aquadroid.databinding.ActivityStatsBinding
+// Import WaveLoadingView to display the water intake progress visually
+import me.itangqi.waveloadingview.WaveLoadingView
 
-
+// StatsActivity displays the user’s water intake statistics, including a progress view
 class StatsActivity : AppCompatActivity() {
 
-    private lateinit var sharedPref: SharedPreferences
-    private lateinit var sqliteHelper: SqliteHelper
-    private var totalPercentage: Float = 0f
-    private var totalGlasses: Float = 0f
+    // View Binding instance to access UI elements (e.g., waterLevelView, btnBack) from activity_stats.xml
+    private lateinit var binding: ActivityStatsBinding
+    // WaveLoadingView instance to display the water intake progress as a wave animation
+    private lateinit var waveLoadingView: WaveLoadingView
 
+    // Requires API 23 (Android 6.0) or higher, specified by the @RequiresApi annotation
+    @RequiresApi(Build.VERSION_CODES.M)
+    // onCreate is called when the activity is first created
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Call the parent class’s onCreate method to perform default initialization
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_stats)
+        // Inflate the layout using View Binding (activity_stats.xml) and set it as the content view
+        binding = ActivityStatsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        sharedPref = getSharedPreferences(AppUtils.USERS_SHARED_PREF, AppUtils.PRIVATE_MODE)
-        sqliteHelper = SqliteHelper(this)
-
-        btnBack.setOnClickListener {
+        // Set a click listener for the back button to finish the activity
+        binding.btnBack.setOnClickListener {
+            // Finish the activity and return to the previous screen (MainActivity.kt)
             finish()
         }
 
-        val entries = ArrayList<Entry>()
-        val dateArray = ArrayList<String>()
+        // Initialize the WaveLoadingView to display the water intake progress
+        waveLoadingView = findViewById(R.id.waterLevelView)
 
-        val cursor: Cursor = sqliteHelper.getAllStats()
+        // Retrieve the current water intake (in ml) passed from MainActivity.kt
+        val intook = intent.getIntExtra("intook", 0)
+        // Retrieve the target water intake (in ml) passed from MainActivity.kt, defaulting to 3000 ml
+        val targetIntake = intent.getIntExtra("totalIntake", 3000)
 
-        if (cursor.moveToFirst()) {
+        // Calculate the progress percentage (intook / targetIntake * 100), capped at 100%
+        val progress = ((intook.toFloat() / targetIntake.toFloat()) * 100).toInt().coerceAtMost(100)
+        // Set the progress value on the WaveLoadingView (updates the wave animation)
+        waveLoadingView.progressValue = progress
+        // Display the progress percentage as the center title of the WaveLoadingView
+        waveLoadingView.centerTitle = "$progress%"
 
-            for (i in 0 until cursor.count) {
-                dateArray.add(cursor.getString(1))
-                val percent = cursor.getInt(2) / cursor.getInt(3).toFloat() * 100
-                totalPercentage += percent
-                totalGlasses += cursor.getInt(2)
-                entries.add(Entry(i.toFloat(), percent))
-                cursor.moveToNext()
-            }
-
-        } else {
-            Toast.makeText(this, "Empty", Toast.LENGTH_LONG).show()
-        }
-
-        if (!entries.isEmpty()) {
-
-            chart.description.isEnabled = false
-            chart.animateY(1000, Easing.Linear)
-            chart.viewPortHandler.setMaximumScaleX(1.5f)
-            chart.xAxis.setDrawGridLines(false)
-            chart.xAxis.position = XAxis.XAxisPosition.TOP
-            chart.xAxis.isGranularityEnabled = true
-            chart.legend.isEnabled = false
-            chart.fitScreen()
-            chart.isAutoScaleMinMaxEnabled = true
-            chart.scaleX = 1f
-            chart.setPinchZoom(true)
-            chart.isScaleXEnabled = true
-            chart.isScaleYEnabled = false
-            chart.axisLeft.textColor = Color.BLACK
-            chart.xAxis.textColor = Color.BLACK
-            chart.axisLeft.setDrawAxisLine(false)
-            chart.xAxis.setDrawAxisLine(false)
-            chart.setDrawMarkers(false)
-            chart.xAxis.labelCount = 5
-
-            val leftAxis = chart.axisLeft
-            leftAxis.axisMinimum = 0f // always start at zero
-            val maxObject: Entry = entries.maxBy { it.y }!! // entries is not empty here
-            leftAxis.axisMaximum = max(a = maxObject.y, b = 100f) + 15f // 15% margin on top
-            val targetLine = LimitLine(100f, "")
-            targetLine.enableDashedLine(5f, 5f, 0f)
-            leftAxis.addLimitLine(targetLine)
-
-            val rightAxis = chart.axisRight
-            rightAxis.setDrawGridLines(false)
-            rightAxis.setDrawZeroLine(false)
-            rightAxis.setDrawAxisLine(false)
-            rightAxis.setDrawLabels(false)
-
-            val dataSet = LineDataSet(entries, "Label")
-            dataSet.setDrawCircles(false)
-            dataSet.lineWidth = 2.5f
-            dataSet.color = ContextCompat.getColor(this, R.color.colorSecondaryDark)
-            dataSet.setDrawFilled(true)
-            dataSet.fillDrawable = getDrawable(R.drawable.graph_fill_gradiant)
-            dataSet.setDrawValues(false)
-            dataSet.mode = LineDataSet.Mode.CUBIC_BEZIER
-
-            val lineData = LineData(dataSet)
-            chart.xAxis.valueFormatter = (ChartXValueFormatter(dateArray))
-            chart.data = lineData
-            chart.invalidate()
-
-            val remaining = sharedPref.getInt(
-                AppUtils.TOTAL_INTAKE,
-                0
-            ) - sqliteHelper.getIntook(AppUtils.getCurrentDate()!!)
-
-            if (remaining > 0) {
-                remainingIntake.text = "$remaining ml"
-            } else {
-                remainingIntake.text = "0 ml"
-            }
-
-            targetIntake.text = "${sharedPref.getInt(
-                AppUtils.TOTAL_INTAKE,
-                0
-            )
-            } ml"
-
-            val percentage = sqliteHelper.getIntook(AppUtils.getCurrentDate()!!) * 100 / sharedPref.getInt(
-                AppUtils.TOTAL_INTAKE,
-                0
-            )
-            waterLevelView.centerTitle = "$percentage%"
-            waterLevelView.progressValue = percentage
-
-        }
+        // Update the remaining intake TextView (targetIntake - intook, minimum 0)
+        binding.remainingIntake.text = "${(targetIntake - intook).coerceAtLeast(0)} ml"
+        // Update the target intake TextView with the total intake goal
+        binding.targetIntake.text = "$targetIntake ml"
     }
 }

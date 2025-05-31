@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.tangqi92:WaveLoadingView:0.3.5@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/31c6525e7bf1389937794f6391e695cf/transformed/jetified-WaveLoadingView-0.3.5/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/31c6525e7bf1389937794f6391e695cf/transformed/jetified-WaveLoadingView-0.3.5/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/31c6525e7bf1389937794f6391e695cf/transformed/jetified-WaveLoadingView-0.3.5/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tangqi92/WaveLoadingView/0.3.5/17da3a823cd4b2c82277eae73415be6112158089/WaveLoadingView-0.3.5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.tangqi92/WaveLoadingView/0.3.5/9d1987fde9c35f1bf8685ccaa63aa05ef6107a45/WaveLoadingView-0.3.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
